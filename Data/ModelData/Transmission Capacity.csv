@@ -1,0 +1,3 @@
+﻿FromZone,ToZone,Reactance,Capacity [MW]
+1,2,0.4,400
+2,1,0.4,400
