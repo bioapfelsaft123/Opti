@@ -1,18 +1,18 @@
-﻿Load #,Zone,LoadType,% of system load
-0,1,D_Residential,3.8
-1,2,D_IndustryBase,3.4
-2,1,D_ IndustryPeak,6.3
-3,2,D_Residential,2.6
-4,1,D_IndustryBase,2.5
-5,1,D_ IndustryPeak,4.8
-6,2,D_Residential,4.4
-7,1,D_IndustryBase,6
-8,2,D_ IndustryPeak,6.1
-9,1,D_Residential,6.8
-10,2,D_IndustryBase,9.3
-11,1,D_ IndustryPeak,6.8
-12,2,D_Residential,11.1
-13,1,D_IndustryBase,3.5
-14,2,D_ IndustryPeak,11.7
-15,1,D_Residential,6.4
-16,2,D_IndustryBase,4.5
+﻿Load #,Zone,LoadType,UtilityType,% of system load
+0,1,D_Residential,U_Residential,3.8
+1,2,D_IndustryBase,U_IndustryBase,3.4
+2,1,D_ IndustryPeak,U_ IndustryPeak,6.3
+3,2,D_Residential,U_Residential,2.6
+4,1,D_IndustryBase,U_IndustryBase,2.5
+5,1,D_ IndustryPeak,U_ IndustryPeak,4.8
+6,2,D_Residential,U_Residential,4.4
+7,1,D_IndustryBase,U_IndustryBase,6
+8,2,D_ IndustryPeak,U_ IndustryPeak,6.1
+9,1,D_Residential,U_Residential,6.8
+10,2,D_IndustryBase,U_IndustryBase,9.3
+11,1,D_ IndustryPeak,U_ IndustryPeak,6.8
+12,2,D_Residential,U_Residential,11.1
+13,1,D_IndustryBase,U_IndustryBase,3.5
+14,2,D_ IndustryPeak,U_ IndustryPeak,11.7
+15,1,D_Residential,U_Residential,6.4
+16,2,D_IndustryBase,U_IndustryBase,4.5
