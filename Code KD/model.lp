@@ -29,14 +29,23 @@ Subject To
  Production_Capacity_Constraint_(13,_0): Gen_DABid[13,0] <= 0
  Production_Capacity_Constraint_(14,_0): Gen_DABid[14,0] <= 0
  Production_Capacity_Constraint_(15,_0): Gen_DABid[15,0] <= 0
- Flow_Equation_0_1: - 2.5 Voltage_Angle[0,0] + 2.5 Voltage_Angle[1,0]
-   + Power_Flow[0,0] = 0
- Flow_Equation_1_0: 2.5 Voltage_Angle[0,0] - 2.5 Voltage_Angle[1,0]
-   + Power_Flow[1,0] = 0
- Flow_Capacity_Constraint_Upper_(0,_0): Power_Flow[0,0] <= 400
- Flow_Capacity_Constraint_Lower_(0,_0): Power_Flow[0,0] >= -400
- Flow_Capacity_Constraint_Upper_(1,_0): Power_Flow[1,0] <= 400
- Flow_Capacity_Constraint_Lower_(1,_0): Power_Flow[1,0] >= -400
+ Demand_Capacity_Constraint_(0,_0): Dem_DABid[0,0] <= 49.59459892841733
+ Demand_Capacity_Constraint_(1,_0): Dem_DABid[1,0] <= 60.37839
+ Demand_Capacity_Constraint_(2,_0): Dem_DABid[2,0] <= 0
+ Demand_Capacity_Constraint_(3,_0): Dem_DABid[3,0] <= 33.93314663523292
+ Demand_Capacity_Constraint_(4,_0): Dem_DABid[4,0] <= 44.395875
+ Demand_Capacity_Constraint_(5,_0): Dem_DABid[5,0] <= 0
+ Demand_Capacity_Constraint_(6,_0): Dem_DABid[6,0] <= 57.42532507500955
+ Demand_Capacity_Constraint_(7,_0): Dem_DABid[7,0] <= 106.5501
+ Demand_Capacity_Constraint_(8,_0): Dem_DABid[8,0] <= 0
+ Demand_Capacity_Constraint_(9,_0): Dem_DABid[9,0] <= 88.74822966137839
+ Demand_Capacity_Constraint_(10,_0): Dem_DABid[10,0] <= 165.152655
+ Demand_Capacity_Constraint_(11,_0): Dem_DABid[11,0] <= 0
+ Demand_Capacity_Constraint_(12,_0): Dem_DABid[12,0] <= 144.8684337119559
+ Demand_Capacity_Constraint_(13,_0): Dem_DABid[13,0] <= 62.154225
+ Demand_Capacity_Constraint_(14,_0): Dem_DABid[14,0] <= 0
+ Demand_Capacity_Constraint_(15,_0): Dem_DABid[15,0] <= 83.52774556365024
+ Demand_Capacity_Constraint_(16,_0): Dem_DABid[16,0] <= 79.912575
  Power_Balance_Constraint_(0,_0): Gen_DABid[0,0] + Gen_DABid[1,0]
    + Gen_DABid[2,0] + Gen_DABid[3,0] + Gen_DABid[4,0] + Gen_DABid[5,0]
    + Gen_DABid[6,0] + Gen_DABid[12,0] + Gen_DABid[14,0] - Dem_DABid[0,0]
@@ -49,6 +58,4 @@ Subject To
    - Dem_DABid[7,0] - Dem_DABid[9,0] - Dem_DABid[11,0] - Dem_DABid[13,0]
    - Dem_DABid[15,0] = 0
 Bounds
- Power_Flow[0,0] free
- Power_Flow[1,0] free
 End
