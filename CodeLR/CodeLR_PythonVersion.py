@@ -1,14 +1,17 @@
 #Loading all the needed Packages
+import os
 import pandas as pd
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
+print("Current working directory:", os.getcwd())
+
 #Load csv files 
-HourlyMCP = pd.read_csv('../Data/ModelData/HourlyMCPDemo.csv', delimiter=',')
-Fuel_Cost_Forecast_Normalized = pd.read_csv('../Data/ModelData/FuelCost_PriceDevelopment50years.csv', delimiter=',')
-Generation_Asset_Data_New = pd.read_csv('../Data/ModelData/Generators_AssetData_New.csv', delimiter=',')
-VRE_Generation_profile = pd.read_csv('../Data/ModelData/VRE_YearlyGenerationProfile_Normalized.csv', delimiter=',')
+HourlyMCP = pd.read_csv(os.path.join(os.getcwd(), '.\Data\ModelData\HourlyMCPDemo.csv'), delimiter=',')
+Fuel_Cost_Forecast_Normalized = pd.read_csv('.\Data\ModelData\FuelCost_PriceDevelopment50years.csv', delimiter=',')
+Generation_Asset_Data_New = pd.read_csv('.\Data\ModelData\Generators_AssetData_New.csv', delimiter=',')
+VRE_Generation_profile = pd.read_csv('.\Data\ModelData\VRE_YearlyGenerationProfile_Normalized.csv', delimiter=',')
 
 #Define budget 
 budget = 1000000
