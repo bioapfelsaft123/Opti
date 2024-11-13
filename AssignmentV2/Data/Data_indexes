@@ -1,0 +1,27 @@
+## Vectors (x rows * 1 column)
+
+H = 24 : Hours in a day
+D = 5 : Typical days in a year
+Y = 30 : Years of the investment timeline
+
+Demand = 17 : Number of Demands
+
+Gen_E = 17 : Number of existing generators
+Gen_N = 16 : Number of new generators
+
+N = H * D * Y = 24 * 5 * 30 = 3600 : Number of hours in the investment period
+
+Gen_E_Max_cap = Gen_E : Max capacity of existing generator
+Gen_N_Max_cap = Gen_N : Max capacity of new generator
+
+Gen_E_Costs = Gen_E : Costs of existing generator
+Gen_N_Costs = Gen_N : Costs of new generator
+
+Inv_Cost_Gen_N = Gen_N : Investment costs of new generator
+
+
+## Matrix (x rows * y columns)
+
+Demand_input: N * Demand = 3600 * 17 : Demand input for all demand units for hours of the investment model
+
+
