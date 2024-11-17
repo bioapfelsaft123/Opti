@@ -74,7 +74,9 @@ class Expando(object):
 
 
 
-class MarketClearingProblem1():
+## CLASS FOR THE MARKET CLEARING PROBLEM OF MODEL 1
+
+class MarketClearingModel1():
     def __init__(self, ParametersObj, DataObj, Model_results = 1, Guroby_results = 0):
         self.P = ParametersObj # Parameters
         self.D = DataObj # Data
@@ -165,9 +167,9 @@ class MarketClearingProblem1():
        
 
 
-## CLASS FOR THE INVESTMENT PROBLEM
+## CLASS FOR THE INVESTMENT PROBLEM OF MODEL 1
 
-class InvestmentProblem1():
+class InvestmentModel1():
     def __init__(self, Parameters, Data, DA_Price, Model_results = 1, Guroby_results = 0):
         self.D = Data  # Data
         self.P = Parameters  # Parameters
