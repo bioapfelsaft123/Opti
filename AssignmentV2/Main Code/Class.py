@@ -204,7 +204,7 @@ class InvestmentModel1():
         op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
         budget_init = self.P.B
         invest_costs = self.var.P_N.T @ self.D.Gen_N_InvCost
-        objective = revenues - op_costs + budget_init - invest_costs
+        objective = self.P.R*(revenues - op_costs) + budget_init - invest_costs
         self.m.setObjective(objective, GRB.MAXIMIZE)
 
 
@@ -237,7 +237,7 @@ class InvestmentModel1():
 ## CLASS FOR THE SECOND PROBLEM
 
 class Model_2():
-    def __init__(self, ParametersObj, DataObj, Model_results = 1, Guroby_results = 0):
+    def __init__(self, ParametersObj, DataObj, Model_results = 1, Guroby_results = 1):
         self.P = ParametersObj # Parameters
         self.D = DataObj # Data
         self.Model_results = Model_results
@@ -249,12 +249,12 @@ class Model_2():
 
 
     def _build_variables(self):
-        self.var.d = self.m.addMVar((self.P.N, self.P.N_dem), lb=0)  # demand per hour for every load
         self.var.P_N = self.m.addMVar((self.P.N_gen_N, 1), lb=0) # Invested capacity in every new generator
+        self.var.d = self.m.addMVar((self.P.N, self.P.N_dem), lb=0)  # demand per hour for every load
         self.var.p_E = self.m.addMVar((self.P.N, self.P.N_gen_E), lb=0)  # power output per hour for every existing generator
         self.var.p_N = self.m.addMVar((self.P.N, self.P.N_gen_N), lb=0) # Power output per hour for every new generator
-        self.var.theta = self.m.addMVar((self.P.N,self.P.N_zone))  # power flow per hour for every transmission line
-        self.var
+        self.var.theta = self.m.addMVar((self.P.N,self.P.N_zone), lb= -1000)  # power flow per hour for every transmission line
+        self.var.DA_Price = self.m.addMVar((self.P.N,self.P.N_zone), lb= -1000) # day ahead price per hour for every zone
         
 
 
@@ -262,17 +262,37 @@ class Model_2():
         # Capacity investment constraint
         self.con.cap_inv = self.m.addConstr(self.var.P_N <= self.D.Gen_N_MaxInvCap, name='Maximum capacity investment')
 
-        # Max production constraint
-        ratio_invest = (self.var.P_N.T / self.D.Gen_N_MaxInvCap.T) # % of the maximum investment capacity invested in each new generator, size (1, N_gen_N)
-        self.ratio_invest_hourly = self.P.Sum_over_hours_gen_N * ratio_invest # Create a matrix of size (N, N_gen_N) with the % of the maximum investment capacity invested in each new generator for each hour
-        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap * self.ratio_invest_hourly , name='Maximum RES production')
-
         # Budget constraint
         self.con.budget = self.m.addConstr(self.var.P_N.T @ self.D.Gen_N_InvCost <= self.P.B, name='Budget constraint')
 
+        ## Primal constraints
+        # Max production constraint existing
+        self.con.max_p_E = self.m.addConstr(self.var.p_E <= self.D.Gen_E_OpCap * self.D.Gen_E_Cap, name='Maximum production of existing generators')
+
+        # Max production constraint new
+        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap @ self.var.P_N, name='Maximum New production')
+
+        # Max demand constraint
+        self.con.max_dem = self.m.addConstr(self.var.d <= self.D.Dem, name='Maximum demand')        
+
+        # Balance constraint
+        prod_zone = self.var.p_E @ self.D.Gen_E_Z.T
+        dem_zone = self.var.d @ self.D.Load_Z.T
+        trans_zone = self.P.Sum_over_hours @ self.Inv_Trans_React.T * (self.var.theta - self.var.theta @ self.D.Trans_Z_Connected_To_Z.T)
+        self.con.balance = self.m.addConstr(dem_zone - prod_zone == -trans_zone, name='Power balance') 
+
+        # Power flow constraints, one per transmission line
+        self.con.power_flow_0 = self.m.addConstr(self.var.theta @ self.P.first_zone == self.P.voltage_angle_0, name='Initial voltage angle')
+        self.Inv_Trans_React = 1/self.D.Trans_React
+        Delta_theta = self.var.theta @ self.D.Trans_Line_From_Z - self.var.theta @ self.D.Trans_Line_To_Z
+        self.con.power_flow = self.m.addConstr(self.P.Sum_over_hours @ self.Inv_Trans_React.T * Delta_theta <= self.P.Sum_over_hours @ self.D.Trans_Cap.T, name='Power flow constraint')
+
+        ## FIRST Order Conditions
+
+
 
     def _build_objective(self):
-        revenues = ((self.var.p_N @ self.D.Gen_N_Z.T) * self.DA_Price).sum()  # don't use quicksum here because it's a <MLinExpr (3600, N_zone)>
+        revenues = ((self.var.p_N @ self.D.Gen_N_Z.T) * self.var.DA_Price).sum()  # don't use quicksum here because it's a <MLinExpr (3600, N_zone)>
         op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
         budget_init = self.P.B
         invest_costs = self.var.P_N.T @ self.D.Gen_N_InvCost
