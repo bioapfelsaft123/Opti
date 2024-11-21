@@ -184,7 +184,7 @@ class InvestmentModel1():
 
 
     def _build_variables(self):
-        self.var.P_N = self.m.addMVar((self.P.N_gen_N, 1), lb=0) # Invested capacity in every new generator
+        self.var.P_N = self.m.addMVar((self.P.N_gen_N), lb=0) # Invested capacity in every new generator
         self.var.p_N = self.m.addMVar((self.P.N, self.P.N_gen_N), lb=0) # Power output per hour for every new generator
 
 
@@ -193,10 +193,10 @@ class InvestmentModel1():
         self.con.cap_inv = self.m.addConstr(self.var.P_N <= self.D.Gen_N_MaxInvCap, name='Maximum capacity investment')
 
         # Max production constraint
-        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap @ self.var.P_N, name='Maximum RES production')
+        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap * self.var.P_N, name='Maximum RES production') 
 
         # Budget constraint
-        self.con.budget = self.m.addConstr(self.var.P_N.T @ self.D.Gen_N_InvCost <= self.P.B, name='Budget constraint')
+        self.con.budget = self.m.addConstr(self.var.P_N @ self.D.Gen_N_InvCost <= self.P.B, name='Budget constraint')
 
 
     def _build_objective(self):
@@ -249,7 +249,7 @@ class Model_2():
 
 
     def _build_variables(self):
-        self.var.P_N = self.m.addMVar((self.P.N_gen_N, 1), lb=0) # Invested capacity in every new generator
+        self.var.P_N = self.m.addMVar((self.P.N_gen_N), lb=0) # Invested capacity in every new generator
         self.var.d = self.m.addMVar((self.P.N, self.P.N_dem), lb=0)  # demand per hour for every load
         self.var.p_E = self.m.addMVar((self.P.N, self.P.N_gen_E), lb=0)  # power output per hour for every existing generator
         self.var.p_N = self.m.addMVar((self.P.N, self.P.N_gen_N), lb=0) # Power output per hour for every new generator
@@ -270,7 +270,7 @@ class Model_2():
         self.con.max_p_E = self.m.addConstr(self.var.p_E <= self.D.Gen_E_OpCap * self.D.Gen_E_Cap, name='Maximum production of existing generators')
 
         # Max production constraint new
-        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap @ self.var.P_N, name='Maximum New production')
+        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap * self.var.P_N, name='Maximum New production')
 
         # Max demand constraint
         self.con.max_dem = self.m.addConstr(self.var.d <= self.D.Dem, name='Maximum demand')        
