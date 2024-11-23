@@ -309,67 +309,67 @@ class Model_2():
 
         ## Complementary Conditions
 
-        # Auxiliary variables for SOS1
-        aux1 = self.m.addMVar((self.P.N, self.P.N_zone),lb=-gp.GRB.INFINITY)
-        aux2 = self.m.addMVar((self.P.N, self.P.N_zone),lb=-gp.GRB.INFINITY)
-        aux1 == - self.P.Sum_over_hours @ self.D.Trans_Cap.T - self.P.Sum_over_hours @ self.Inv_Trans_React.T * Delta_theta
-        aux2 == self.P.Sum_over_hours @ self.Inv_Trans_React.T * Delta_theta - self.P.Sum_over_hours @ self.D.Trans_Cap.T
+        # # Auxiliary variables for SOS1
+        # aux1 = self.m.addMVar((self.P.N, self.P.N_zone),lb=-gp.GRB.INFINITY)
+        # aux2 = self.m.addMVar((self.P.N, self.P.N_zone),lb=-gp.GRB.INFINITY)
+        # aux1 == - self.P.Sum_over_hours @ self.D.Trans_Cap.T - self.P.Sum_over_hours @ self.Inv_Trans_React.T * Delta_theta
+        # aux2 == self.P.Sum_over_hours @ self.Inv_Trans_React.T * Delta_theta - self.P.Sum_over_hours @ self.D.Trans_Cap.T
 
-        for h in range(self.P.N):
+        # for h in range(self.P.N):
 
-            # Equation 3.29: μEC_g,t · pEC_g,t = 0, μEC_g,t · (P_EC_g − pEC_g,t) = 0
-            for g in range(self.P.N_gen_E):
+        #     # Equation 3.29: μEC_g,t · pEC_g,t = 0, μEC_g,t · (P_EC_g − pEC_g,t) = 0
+        #     for g in range(self.P.N_gen_E):
 
-                self.m.addSOS(1, [self.var.mu_E_down[h,g], self.var.p_E[h,g]])  
+        #         self.m.addSOS(1, [self.var.mu_E_down[h,g], self.var.p_E[h,g]])  
 
-                aux = self.m.addVar(lb=-gp.GRB.INFINITY)
+        #         aux = self.m.addVar(lb=-gp.GRB.INFINITY)
 
-                aux == self.D.Gen_E_OpCap[h,g] * self.D.Gen_E_Cap[g] - self.var.p_E[h,g]
+        #         aux == self.D.Gen_E_OpCap[h,g] * self.D.Gen_E_Cap[g] - self.var.p_E[h,g]
 
-                self.m.addSOS(1, [self.var.mu_E_up[h,g], aux])
+        #         self.m.addSOS(1, [self.var.mu_E_up[h,g], aux])
 
 
-            # Equation 3.30: μNC_g,t · pNC_g,t = 0, μNC_g,t · (P_NC_g − pNC_g,t) = 0
-            for g in range(self.P.N_gen_N):
+        #     # Equation 3.30: μNC_g,t · pNC_g,t = 0, μNC_g,t · (P_NC_g − pNC_g,t) = 0
+        #     for g in range(self.P.N_gen_N):
 
-                self.m.addSOS(1, [self.var.mu_N_down[h,g], self.var.p_N[h,g]])  
+        #         self.m.addSOS(1, [self.var.mu_N_down[h,g], self.var.p_N[h,g]])  
 
-                aux = self.m.addVar(lb=-gp.GRB.INFINITY)
+        #         aux = self.m.addVar(lb=-gp.GRB.INFINITY)
 
-                aux == self.D.Gen_N_OpCap[h,g] * self.var.P_N[g] - self.var.p_N[h,g]
+        #         aux == self.D.Gen_N_OpCap[h,g] * self.var.P_N[g] - self.var.p_N[h,g]
 
-                self.m.addSOS(1, [self.var.mu_N_up[h,g], aux])
+        #         self.m.addSOS(1, [self.var.mu_N_up[h,g], aux])
 
-            # Equation 3.31: νd,t · dd,t = 0, νd,t · (DC_d − dd,t) = 0
-            for d in range(self.P.N_dem):
+        #     # Equation 3.31: νd,t · dd,t = 0, νd,t · (DC_d − dd,t) = 0
+        #     for d in range(self.P.N_dem):
 
-                self.m.addSOS(1, [self.var.nu_down[h,d], self.var.d[h,d]])  
+        #         self.m.addSOS(1, [self.var.nu_down[h,d], self.var.d[h,d]])  
 
-                aux = self.m.addVar(lb=-gp.GRB.INFINITY)
+        #         aux = self.m.addVar(lb=-gp.GRB.INFINITY)
 
-                aux == self.D.Dem[h,d] - self.var.d[h,d]
+        #         aux == self.D.Dem[h,d] - self.var.d[h,d]
 
-                self.m.addSOS(1, [self.var.nu_up[h,d], aux])
+        #         self.m.addSOS(1, [self.var.nu_up[h,d], aux])
 
-            # Equation 3.32: ωz,m,t · linear terms for power flow
+        #     # Equation 3.32: ωz,m,t · linear terms for power flow
 
-            for z in range(self.P.N_zone):  
+        #     for z in range(self.P.N_zone):  
 
-                self.m.addSOS(1, [self.var.ome_down[h,z], aux1[h,z]])
+        #         self.m.addSOS(1, [self.var.ome_down[h,z], aux1[h,z]])
 
-                self.m.addSOS(1, [self.var.ome_up[h,z], aux2[h,z]])
+        #         self.m.addSOS(1, [self.var.ome_up[h,z], aux2[h,z]])
 
-            # Equation 3.33: ρt · θ1,t = 0
-            self.m.addSOS(1, [self.var.rho[h]  , self.var.theta[h,0]], [1, 1])
+        #     # Equation 3.33: ρt · θ1,t = 0
+        #     self.m.addSOS(1, [self.var.rho[h]  , self.var.theta[h,0]], [1, 1])
 
 
     def _build_objective(self):
         el_1 = gp.quicksum(self.var.p_E @ self.D.Gen_E_OpCost)
         el_2 = gp.quicksum(self.D.Gen_E_OpCap[h,g]* self.D.Gen_E_Cap[g] * self.var.mu_E_up[h,g] for h in range(self.P.N) for g in range(self.P.N_gen_E))
         el_3 = gp.quicksum(self.var.d @ self.D.Uti)
-        el_4 = gp.quicksum(self.D.Dem[h,d] * self.var.nu_up  for h in range(self.P.N) for d in range(self.P.N_dem))
-        el_5 = gp.quicksum((self.P.Sum_over_hours @ self.D.Trans_Cap.T) @ self.var.ome_down)
-        el_6 = gp.quicksum((self.P.Sum_over_hours @ self.D.Trans_Cap.T) @ self.var.ome_up)
+        el_4 = gp.quicksum(self.D.Dem[h,d] * self.var.nu_up[h,d]  for h in range(self.P.N) for d in range(self.P.N_dem))
+        el_5 = gp.quicksum(gp.quicksum((self.P.Sum_over_hours @ self.D.Trans_Cap.T) @ self.var.ome_down.T))
+        el_6 = gp.quicksum(gp.quicksum((self.P.Sum_over_hours @ self.D.Trans_Cap.T) @ self.var.ome_up.T))
         op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
         invest_costs = self.var.P_N.T @ self.D.Gen_N_InvCost
         objective = self.P.R*(- el_1 - el_2 + el_3 - el_4 - el_5 + el_6 - op_costs) - invest_costs
