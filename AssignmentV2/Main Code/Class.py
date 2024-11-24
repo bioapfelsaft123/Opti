@@ -231,6 +231,7 @@ class InvestmentModel1():
         self.res.df = pd.DataFrame(self.D.Gen_N_Tech, columns = ['Technology'])
         self.res.df['Invested capacity (MW)'] = self.res.P_N
         
+        
 
 
 ## CLASS FOR THE SECOND PROBLEM
