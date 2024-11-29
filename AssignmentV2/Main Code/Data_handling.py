@@ -44,7 +44,7 @@ Trans_Z_Connected_To_Z = np.array(Trans_Z_Connected_To_Z)  # Mapping the connect
 # Fix the shape of matrices with only one column   
 Gen_E_OpCost = Gen_E_OpCost.reshape((Gen_E_OpCost.shape[0], 1))
 Gen_N_OpCost = Gen_N_OpCost.reshape((Gen_N_OpCost.shape[0], 1))
-# Gen_E_Cap = Gen_E_Cap.reshape((Gen_N_OpCost.shape[0], 1))
+Gen_E_Cap = Gen_E_Cap.reshape((Gen_N_OpCost.shape[0], 1))
 Gen_N_MaxInvCap = Gen_N_MaxInvCap.reshape((Gen_N_MaxInvCap.shape[0], 1))
 Gen_N_InvCost = Gen_N_InvCost.reshape((Gen_N_InvCost.shape[0], 1))
 Gen_E_Tech = Gen_E_Tech.reshape((Gen_E_Tech.shape[0], 1))

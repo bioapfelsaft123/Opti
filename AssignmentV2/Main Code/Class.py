@@ -108,7 +108,7 @@ class MarketClearingModel1():
         self.con.max_dem = self.m.addConstr(self.var.d <= self.D.Dem, name='Maximum demand')
 
         # Max production constraint
-        self.con.max_p_E = self.m.addConstr(self.var.p_E <= self.D.Gen_E_OpCap * self.D.Gen_E_Cap, name='Maximum production of existing generators')
+        self.con.max_p_E = self.m.addConstr(self.var.p_E <= self.D.Gen_E_OpCap * (self.P.Sum_over_hours @ self.D.Gen_E_Cap.T), name='Maximum production of existing generators')
 
         # Balance constraint
         prod_zone = self.var.p_E @ self.D.Gen_E_Z.T
@@ -151,7 +151,7 @@ class MarketClearingModel1():
         print('Objective value: ', self.m.objVal)
         
         # Display the optimal values of the decision variables for the 24 first hours in a df, looping through the zones
-        n_test = 3600
+        n_test = self.P.N
         self.res.df = pd.DataFrame(columns=['Hour'])
         self.res.df['Hour'] = np.arange(1, n_test + 1)
         Load = self.var.d[0:n_test].X @ self.D.Load_Z.T
