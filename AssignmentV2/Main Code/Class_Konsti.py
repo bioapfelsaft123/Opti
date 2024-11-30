@@ -65,6 +65,7 @@ class Parameters():
 
         # Create a matrix to set the initial voltage angle to 0
         self.voltage_angle_0 = np.zeros((N, N_zone))
+
         
 
 
@@ -234,8 +235,8 @@ class InvestmentModel1():
         self.res.df = pd.DataFrame(self.D.Gen_N_Tech, columns = ['Technology'])
         self.res.df['Invested capacity (MW)'] = self.res.P_N
         
-        
-#Class for the robust stochastic model
+ ## CLASS FOR THE INVESTMENT PROBLEM OF MODEL 1
+
 class InvestmentModel_Stochastic():
     def __init__(self, Parameters, Data, DA_Price, Model_results = 1, Guroby_results = 1):
         self.D = Data  # Data
@@ -262,14 +263,13 @@ class InvestmentModel_Stochastic():
         self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap * self.var.P_N, name='Maximum RES production') 
 
         # Budget constraint
-        for s in range(self.P.N_S):
-            self.con.budget = self.m.addConstr(gp.quicksum(self.var.P_N [g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N)) <= self.P.B, name='Budget constraint')
+        self.con.budget = self.m.addConstr(self.var.P_N @ self.D.Gen_N_InvCost <= self.P.B, name='Budget constraint')
 
 
     def _build_objective(self):
         revenues = ((self.var.p_N @ self.D.Gen_N_Z.T) * self.DA_Price).sum()  # don't use quicksum here because it's a <MLinExpr (3600, N_zone)>
         op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
-        invest_costs = gp.quicksum((1/self.P.N_S)*self.var.P_N[g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
+        invest_costs = gp.quicksum((1/self.P.N_S)*self.var.P_N.T @ self.D.Gen_N_InvCost[:,s] for s in range(self.P.N_S))
         objective = self.P.R*(revenues - op_costs) - invest_costs
         self.m.setObjective(objective, GRB.MAXIMIZE)
 
@@ -299,71 +299,8 @@ class InvestmentModel_Stochastic():
         self.res.df['Invested capacity (MW)'] = self.res.P_N       
 
 
-#Class for chance constraint model
-class InvestmentModel_ChanceConstraint():
-    def __init__(self, Parameters, Data, DA_Price, Model_results = 1, Guroby_results = 1):
-        self.D = Data  # Data
-        self.P = Parameters  # Parameters
-        self.DA_Price = DA_Price  # Day-ahead price
-        self.Model_results = Model_results  # Display results
-        self.Guroby_results = Guroby_results  # Display guroby results
-        self.var = Expando()  # Variables
-        self.con = Expando()  # Constraints
-        self.res = Expando()  # Results
-        self._build_model() 
 
 
-    def _build_variables(self):
-        self.var.P_N = self.m.addMVar((self.P.N_gen_N), lb=0) # Invested capacity in every new generator
-        self.var.p_N = self.m.addMVar((self.P.N, self.P.N_gen_N), lb=0) # Power output per hour for every new generator
-        self.var.u = self.m.addMVar((self.P.N_S), vtype=GRB.BINARY) # Binary variable for each scenario
-
-
-    def _build_constraints(self):
-        # Capacity investment constraint
-        self.con.cap_inv = self.m.addConstr(self.var.P_N <= self.D.Gen_N_MaxInvCap, name='Maximum capacity investment')
-
-        # Max production constraint
-        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap * self.var.P_N, name='Maximum RES production') 
-
-        # Budget constraint
-        for s in range(self.P.N_S):
-            self.con.budget = self.m.addConstr(gp.quicksum(self.var.P_N [g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N)) - self.P.B <= (1-self.var.u[s])*self.P.Big_M, name='Budget constraint')
-
-        # Chance constraint
-        self.con.chance = self.m.addConstr(gp.quicksum(self.var.u[s] for s in range(self.P.N_S))/self.P.N_S >= (1-self.P.epsilon), name='Chance constraint')
-
-
-    def _build_objective(self):
-        revenues = ((self.var.p_N @ self.D.Gen_N_Z.T) * self.DA_Price).sum()  # don't use quicksum here because it's a <MLinExpr (3600, N_zone)>
-        op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
-        invest_costs = gp.quicksum((1/self.P.N_S)*self.var.P_N[g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
-        objective = self.P.R*(revenues - op_costs) - invest_costs
-        self.m.setObjective(objective, GRB.MAXIMIZE)
-
-
-    def _display_guropby_results(self):
-        self.m.setParam('OutputFlag', self.Guroby_results)
-    
-
-    def _build_model(self):
-        self.m = gp.Model('Investment problem')
-        self._build_variables()  
-        self._build_constraints()
-        self._build_objective()
-        self._display_guropby_results()
-        self.m.optimize()
-        if self.Model_results == 1:
-            self._extract_results()
-
-    def _extract_results(self):
-        # Display the objective value
-        print('Objective value: ', self.m.objVal)
-        # Display the generators the model invested in, in a dataframe
-        self.res.P_N = self.var.P_N.X
-        self.res.P_N = self.res.P_N.reshape((self.P.N_gen_N,1))
-        self.res.df = pd.DataFrame(self.D.Gen_N_Tech, columns = ['Technology'])
-        self.res.df['Invested capacity (MW)'] = self.res.P_N       
 ## CLASS FOR THE SECOND PROBLEM
 
 class Model_2():
