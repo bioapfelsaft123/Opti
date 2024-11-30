@@ -36,7 +36,7 @@ class InputData():
 ## CLASS FOR PARAMETERS
 
 class Parameters():
-    def __init__(self, H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B,R, N_Scenarios,max_deviation,epsilon):
+    def __init__(self, H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B,R, N_Scenarios,max_deviation,epsilon, alpha, beta):
         self.H = H
         self.D = D
         self.Y = Y
@@ -51,6 +51,8 @@ class Parameters():
         self.N_S = N_Scenarios
         self.Big_M = B*(1+max_deviation)
         self.epsilon = epsilon
+        self.alpha = alpha
+        self.beta = beta
 
         # Create useful vectors
         self.Sum_over_dem = np.ones((N_dem,1)) # Vector of ones to sum the demands over hours
@@ -364,6 +366,83 @@ class InvestmentModel_ChanceConstraint():
         self.res.P_N = self.res.P_N.reshape((self.P.N_gen_N,1))
         self.res.df = pd.DataFrame(self.D.Gen_N_Tech, columns = ['Technology'])
         self.res.df['Invested capacity (MW)'] = self.res.P_N       
+
+
+#Class for CVaR model
+class InvestmentModel_CVaR():
+    def __init__(self, Parameters, Data, DA_Price, Model_results = 1, Guroby_results = 1):
+        self.D = Data  # Data
+        self.P = Parameters  # Parameters
+        self.DA_Price = DA_Price  # Day-ahead price
+        self.Model_results = Model_results  # Display results
+        self.Guroby_results = Guroby_results  # Display guroby results
+        self.var = Expando()  # Variables
+        self.con = Expando()  # Constraints
+        self.res = Expando()  # Results
+        self._build_model() 
+
+
+    def _build_variables(self):
+        self.var.P_N = self.m.addMVar((self.P.N_gen_N), lb=0) # Invested capacity in every new generator
+        self.var.p_N = self.m.addMVar((self.P.N, self.P.N_gen_N), lb=0) # Power output per hour for every new generator
+        self.var.eta = self.m.addMVar((self.P.N_S), lb=0)# Eta for each scenario
+        self.var.zeta = self.m.addMVar((1), lb=0) # Zeta for the CVaR
+
+
+    def _build_constraints(self):
+        # Capacity investment constraint
+        self.con.cap_inv = self.m.addConstr(self.var.P_N <= self.D.Gen_N_MaxInvCap, name='Maximum capacity investment')
+
+        # Max production constraint
+        self.con.max_p_N = self.m.addConstr(self.var.p_N <= self.D.Gen_N_OpCap * self.var.P_N, name='Maximum RES production') 
+
+        # Budget constraint
+        for s in range(self.P.N_S):
+            self.con.budget = self.m.addConstr(gp.quicksum(self.var.P_N [g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N)) <= self.P.B, name='Budget constraint')
+        # CVaR constraint
+        for s in range(self.P.N_S):
+            self.con.CVaR = self.m.addConstr(self.var.eta[s] >= self.var.zeta 
+                                             - (((self.var.p_N @ self.D.Gen_N_Z.T) * self.DA_Price).sum() # Revenues
+                             - gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)  # Operating Costs
+                             - gp.quicksum((1/self.P.N_S)*self.var.P_N[g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))) #Uncertain Capex
+                                                         , name='CVaR constraint')
+
+    def _build_objective(self):
+        revenues = ((self.var.p_N @ self.D.Gen_N_Z.T) * self.DA_Price).sum()  # don't use quicksum here because it's a <MLinExpr (3600, N_zone)>
+        op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
+        invest_costs = gp.quicksum((1/self.P.N_S)*self.var.P_N[g] * self.D.scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
+        CVaR = (self.var.zeta - (1/(1-self.P.alpha))*gp.quicksum(1/self.P.N_S*self.var.eta[s] for s in range(self.P.N_S)))
+        objective = (1-self.P.beta)*(self.P.R*(revenues - op_costs) - invest_costs) + self.P.beta*CVaR
+        self.m.setObjective(objective, GRB.MAXIMIZE)
+
+
+    def _display_guropby_results(self):
+        self.m.setParam('OutputFlag', self.Guroby_results)
+    
+
+    def _build_model(self):
+        self.m = gp.Model('Investment problem')
+        self._build_variables()  
+        self._build_constraints()
+        self._build_objective()
+        self._display_guropby_results()
+        self.m.optimize()
+        if self.Model_results == 1:
+            self._extract_results()
+
+    def _extract_results(self):
+        # Display the objective value
+        print('Objective value: ', self.m.objVal)
+    
+        
+        # Display the generators the model invested in, in a dataframe
+        self.res.P_N = self.var.P_N.X
+        self.res.P_N = self.res.P_N.reshape((self.P.N_gen_N,1))
+        self.res.df = pd.DataFrame(self.D.Gen_N_Tech, columns = ['Technology'])
+        self.res.df['Invested capacity (MW)'] = self.res.P_N 
+
+
+
 ## CLASS FOR THE SECOND PROBLEM
 
 class Model_2():
