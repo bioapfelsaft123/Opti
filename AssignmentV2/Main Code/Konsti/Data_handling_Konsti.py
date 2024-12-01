@@ -41,17 +41,8 @@ Trans_Line_From_Z = np.array(Trans_Line_From_Z)  # Mapping the origine zone for 
 Trans_Line_To_Z = np.array(Trans_Line_To_Z)  # Mapping the destination zone for each transmission line
 Trans_Z_Connected_To_Z = np.array(Trans_Z_Connected_To_Z)  # Mapping the connected zones for each zone
 
-# Fix the shape of matrices with only one column   
-Gen_E_OpCost = Gen_E_OpCost.reshape((Gen_E_OpCost.shape[0], 1))
-Gen_N_OpCost = Gen_N_OpCost.reshape((Gen_N_OpCost.shape[0], 1))
-Gen_E_Cap = Gen_E_Cap.reshape((Gen_N_OpCost.shape[0], 1))
-Gen_N_MaxInvCap = Gen_N_MaxInvCap.reshape((Gen_N_MaxInvCap.shape[0], 1))
-Gen_N_InvCost = Gen_N_InvCost.reshape((Gen_N_InvCost.shape[0], 1))
-Gen_E_Tech = Gen_E_Tech.reshape((Gen_E_Tech.shape[0], 1))
-Gen_N_Tech = Gen_N_Tech.reshape((Gen_N_Tech.shape[0], 1))
-Trans_React = Trans_React.reshape((Trans_React.shape[0], 1))
-Trans_Cap = Trans_Cap.reshape((Trans_Cap.shape[0], 1))
 
+# Create random scenarios for the investment cost of new generators
 # Create random scenarios for the investment cost of new generators
 N_Scenarios = 100
 max_deviation = 1
@@ -63,6 +54,20 @@ for i in range(N_Scenarios):
     
     # Apply the variations to the original costs
     scenarios[:,i] = Gen_N_Data.loc[:,'C_CapInv ($/MW)'] * (1 + random_variation)
+
+
+# Fix the shape of matrices with only one column   
+Gen_E_OpCost = Gen_E_OpCost.reshape((Gen_E_OpCost.shape[0], 1))
+Gen_N_OpCost = Gen_N_OpCost.reshape((Gen_N_OpCost.shape[0], 1))
+Gen_E_Cap = Gen_E_Cap.reshape((Gen_N_OpCost.shape[0], 1))
+Gen_N_MaxInvCap = Gen_N_MaxInvCap.reshape((Gen_N_MaxInvCap.shape[0], 1))
+#Gen_N_InvCost = Gen_N_InvCost.reshape((Gen_N_InvCost.shape[0], 1))
+Gen_E_Tech = Gen_E_Tech.reshape((Gen_E_Tech.shape[0], 1))
+Gen_N_Tech = Gen_N_Tech.reshape((Gen_N_Tech.shape[0], 1))
+Trans_React = Trans_React.reshape((Trans_React.shape[0], 1))
+Trans_Cap = Trans_Cap.reshape((Trans_Cap.shape[0], 1))
+
+
 ## DATA INDEX
 
 # Create a Dataframe to store the name of each vector/matrix we will use, their size and their content
