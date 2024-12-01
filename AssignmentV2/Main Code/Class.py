@@ -81,7 +81,7 @@ class Expando(object):
 
 
 
-## CLASS FOR THE MARKET CLEARING PROBLEM OF MODEL 1
+## CLASS FOR THE MARKET CLEARING PROBLEM OF MODEL1
 
 class MarketClearingModel1():
     def __init__(self, ParametersObj, DataObj, Model_results = 1, Guroby_results = 1):
