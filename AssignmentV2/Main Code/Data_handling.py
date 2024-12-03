@@ -53,16 +53,26 @@ Trans_React = Trans_React.reshape((Trans_React.shape[0], 1))
 Trans_Cap = Trans_Cap.reshape((Trans_Cap.shape[0], 1))
 
 # Create random scenarios for the investment cost of new generators
-N_Scenarios = 100
-max_deviation = 1
-scenarios = np.zeros((len(Gen_N_Data),N_Scenarios))
+N_S = 3
+max_deviation = 0.5 # 50% of maximum/ min deviation
+Gen_N_Data_scenarios = np.zeros((len(Gen_N_Data),N_S))
+Gen_N_OpCost_scenarios = np.zeros((len(Gen_N_OpCost),N_S))
 
-for i in range(N_Scenarios):
+for i in range(N_S):
     # Generate random variations in the range [-x%, x%]
     random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_Data))
     
     # Apply the variations to the original costs
-    scenarios[:,i] = Gen_N_Data.loc[:,'C_CapInv ($/MW)'] * (1 + random_variation)
+    Gen_N_Data_scenarios[:,i] = Gen_N_Data.loc[:,'C_CapInv ($/MW)'] * (1 + random_variation)
+
+for i in range(N_S):
+    # Generate random variations in the range [-x%, x%]
+    random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_OpCost))
+    
+    # Apply the variations to the original costs
+    Gen_N_OpCost_scenarios[:,i] = Gen_N_OpCost[:,0] * (1 + random_variation)
+
+
 ## DATA INDEX
 
 # Create a Dataframe to store the name of each vector/matrix we will use, their size and their content

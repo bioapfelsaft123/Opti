@@ -7,6 +7,12 @@ from Class import *
 
 
 
+
+
+
+
+
+
 ## CLASS FOR THE SECOND PROBLEM
 
 class Model_2_no_zone():
