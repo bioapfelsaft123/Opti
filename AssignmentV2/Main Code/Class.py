@@ -286,7 +286,7 @@ class InvestmentModel_Robust():
         self._build_variables()  
         self._build_constraints()
         self._build_objective()
-        self._display_guropby_results()
+        #self._display_guropby_results()
         self.m.optimize()
         if self.Model_results == 1:
             self._extract_results()
@@ -339,6 +339,7 @@ class InvestmentModel_Stochastic():
         op_costs = gp.quicksum(self.var.p_N[h,g,s] * self.D.Gen_N_OpCost_scenarios[g,s] for h in range(self.P.N) for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
         invest_costs = gp.quicksum(self.var.P_N[g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
         objective = (1/self.P.N_S)*self.P.R*(revenues - op_costs) - invest_costs*(1/self.P.N_S)
+
         self.m.setObjective(objective, GRB.MAXIMIZE)
 
 
@@ -351,7 +352,7 @@ class InvestmentModel_Stochastic():
         self._build_variables()  
         self._build_constraints()
         self._build_objective()
-        self._display_guropby_results()
+        #self._display_guropby_results()
         self.m.optimize()
         if self.Model_results == 1:
             self._extract_results()
@@ -419,7 +420,7 @@ class InvestmentModel_ChanceConstraint():
         self._build_variables()  
         self._build_constraints()
         self._build_objective()
-        self._display_guropby_results()
+        #self._display_guropby_results()
         self.m.optimize()
         if self.Model_results == 1:
             self._extract_results()
