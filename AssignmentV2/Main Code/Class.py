@@ -60,9 +60,11 @@ class Parameters():
         self.Sum_over_gen_E = np.ones((N_gen_E,1)) # Vector of ones to sum the generation over hours
         self.Sum_over_gen_N = np.ones((N_gen_N,1)) # Vector of ones to sum the generation over hours
         self.Sum_over_hours = np.ones((N,1)) # Vector of ones to sum over hours
+        self.Sum_over_zones = np.ones((N_zone,1))
         self.Sum_over_hours_gen_N = np.ones((N, N_gen_N)) # Vector of ones to sum over hours and generators
         self.Sum_over_scenarios = np.ones((N_S,1)) # Vector of ones to sum over scenarios
         self.Sum_over_scenarios_test = np.ones((N_S_test,1)) # Vector of ones to sum over scenarios
+        
 
         # Create a matrix to access the first zone
         self.first_zone = np.zeros((N_zone, N_zone))
@@ -333,13 +335,14 @@ class InvestmentModel_Stochastic():
 
         # Budget constraint
         for s in range(self.P.N_S):
-            self.con.budget = self.m.addConstr(gp.quicksum(self.var.P_N [g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N)) <= self.P.B, name='Budget constraint')
+            self.con.budget = self.m.addConstr(gp.quicksum(self.var.P_N [:] @ self.P.Sum_over_gen_N * self.D.Gen_N_Data_scenarios[:,s] @ self.P.Sum_over_gen_N) <= self.P.B, name='Budget constraint')
 
 
     def _build_objective(self):
-        revenues = gp.quicksum(self.P.Sum_over_hours.T @ self.var.p_N[:,g,:] @ self.P.Sum_over_scenarios * self.D.Gen_N_Z[z,g] * self.P.Sum_over_hours.T @ self.DA_Price[:,z] for g in range(self.P.N_gen_N) for z in range(self.P.N_zone))  
-        op_costs = gp.quicksum(self.P.Sum_over_hours.T @ self.var.p_N[:,g,:] @ self.P.Sum_over_scenarios * self.D.Gen_N_OpCost_scenarios[g,:] @ self.P.Sum_over_scenarios for g in range(self.P.N_gen_N))
-        invest_costs = gp.quicksum(self.var.P_N[g] * self.D.Gen_N_Data_scenarios[g,:] @ self.P.Sum_over_scenarios for g in range(self.P.N_gen_N))
+        # Precompute constant terms
+        revenues = gp.quicksum(self.P.Sum_over_hours.T @ self.var.p_N[:,g,s] * self.D.Gen_N_Z[:,g] @ self.P.Sum_over_zones * self.P.Sum_over_hours.T @ self.DA_Price[:,:] @ self.P.Sum_over_zones for g in range(self.P.N_gen_N)for s in range(self.P.N_S))  
+        op_costs = gp.quicksum(self.P.Sum_over_hours.T @ self.var.p_N[:,g,s] * self.D.Gen_N_OpCost_scenarios[g,:] @ self.P.Sum_over_scenarios for g in range(self.P.N_gen_N)for s in range(self.P.N_S))
+        invest_costs = gp.quicksum(self.var.P_N[g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N)for s in range(self.P.N_S))
         objective = (1/self.P.N_S)*self.P.R*(revenues - op_costs) - invest_costs*(1/self.P.N_S)
 
         self.m.setObjective(objective, GRB.MAXIMIZE)
@@ -362,6 +365,8 @@ class InvestmentModel_Stochastic():
     def _extract_results(self):
         # Display the objective value
         print('Objective value: ', self.m.objVal)
+        #print number of scenarios
+        print('Number of scenarios: ', self.P.N_S)
         
         # Display the generators the model invested in, in a dataframe
         self.res.P_N = self.var.P_N.X
@@ -404,10 +409,12 @@ class InvestmentModel_Stochastic_ChanceConstraint():
         self.con.chance = self.m.addConstr(gp.quicksum(self.var.u[s] for s in range(self.P.N_S))/self.P.N_S >= (1-self.P.epsilon), name='Chance constraint')
 
     def _build_objective(self):
-        revenues = gp.quicksum(self.var.p_N[h,g,s] * self.D.Gen_N_Z[z,g] * self.DA_Price[h,z] for h in range(self.P.N) for g in range(self.P.N_gen_N) for s in range(self.P.N_S) for z in range(self.P.N_zone))  
-        op_costs = gp.quicksum(self.var.p_N[h,g,s] * self.D.Gen_N_OpCost_scenarios[g,s] for h in range(self.P.N) for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
-        invest_costs = gp.quicksum(self.var.P_N[g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
+        # Precompute constant terms
+        revenues = gp.quicksum(self.P.Sum_over_hours.T @ self.var.p_N[:,g,s] * self.D.Gen_N_Z[:,g] @ self.P.Sum_over_zones * self.P.Sum_over_hours.T @ self.DA_Price[:,:] @ self.P.Sum_over_zones for g in range(self.P.N_gen_N)for s in range(self.P.N_S))  
+        op_costs = gp.quicksum(self.P.Sum_over_hours.T @ self.var.p_N[:,g,s] * self.D.Gen_N_OpCost_scenarios[g,:] @ self.P.Sum_over_scenarios for g in range(self.P.N_gen_N)for s in range(self.P.N_S))
+        invest_costs = gp.quicksum(self.var.P_N[g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N)for s in range(self.P.N_S))
         objective = (1/self.P.N_S)*self.P.R*(revenues - op_costs) - invest_costs*(1/self.P.N_S)
+
 
         self.m.setObjective(objective, GRB.MAXIMIZE)
 

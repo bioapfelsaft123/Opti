@@ -36,9 +36,9 @@ R = 73 # Conversion rate
 
 
 ## CREATE THE PARAMETERS AND DATA OBJECTS
-ParametersObj = Parameters(H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B, R, N_S,max_deviation,epsilon, alpha, beta)
+## CREATE THE PARAMETERS AND DATA OBJECTS
+ParametersObj = Parameters(H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B, R, N_S, N_S_test, max_deviation,epsilon, alpha, beta)
 DataObj = InputData(Dem, Uti, Load_Z, Gen_E_OpCost, Gen_N_OpCost, Gen_N_MaxInvCap, Gen_E_Cap, Gen_N_InvCost, Gen_E_Tech, Gen_N_Tech, Gen_E_Z, Gen_N_Z, Gen_E_OpCap, Gen_N_OpCap, Trans_React, Trans_Cap, Trans_Line_From_Z, Trans_Line_To_Z, Trans_Z_Connected_To_Z,Gen_N_Data_scenarios,Gen_N_OpCost_scenarios)
-
 # Run the Market Clearing Problem
 MarketClearing1 = MarketClearingModel1(ParametersObj, DataObj)
 
