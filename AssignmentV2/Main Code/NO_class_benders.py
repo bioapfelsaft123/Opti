@@ -58,14 +58,14 @@ cap_inv = mas.addConstr(P_N <= Gen_N_MaxInvCap, name='Maximum capacity investmen
 
 # Budget constraint
 for s in range(N_S):
-    budget = mas.addConstr(gp.quicksum(P_N[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N)) <= B, name='Budget constraint')
+    budget = mas.addConstr(P_N @ Gen_N_Data_scenarios[:,s] <= B, name='Budget constraint')
 
 objective = - gp.quicksum(P_N[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N) for s in range(N_S))*(1/N_S) + q
 mas.setObjective(objective, GRB.MAXIMIZE)
 
 def solve_master(nu):
 
-    mas.addConstr(gp.quicksum(nu[h,g,s] * P_N[g] for h in range(N) for g in range(N_gen_N) for s in range(N_S)) >= q)
+    mas.addConstr(gp.quicksum(nu[h,:,s] @ P_N for h in range(N) for s in range(N_S)) >= q)
 
     mas.optimize()
 
@@ -82,11 +82,10 @@ def solve_sub(P_N_c):
 
     # Max production constraint
     for h in range(N):
-        for g in range(N_gen_N):
-            for s in range(N_S):
-                    sub.addConstr(nu[h,g,s] >= R*((DA_Price @ Gen_N_Z)[h,g] - Gen_N_OpCost_scenarios[g,s])/N_S)
+        for s in range(N_S):
+                sub.addConstr(nu[h,:,s] >= R*((DA_Price @ Gen_N_Z)[h,:] - Gen_N_OpCost_scenarios[:,s])/N_S)
 
-    objective = gp.quicksum(nu[h,g,s] * P_N_c[g] for h in range(N) for g in range(N_gen_N) for s in range(N_S))
+    objective = gp.quicksum(nu[h,:,s] @ P_N_c for h in range(N) for s in range(N_S))
 
     sub.setObjective(objective, GRB.MINIMIZE)
 
@@ -104,10 +103,10 @@ def main():
     Pbar = np.zeros(N_gen_N)
     it = 1
 
-    while (UB - LB > Delta):
+    while it <= 10: #(UB - LB > Delta):
         sub_obj, nu = solve_sub(Pbar)  # Replace solve_sub with the corresponding function
 
-        LB = max(LB, sub_obj - sum(Pbar[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N) for s in range(N_S))) 
+        LB = max(LB, sub_obj - sum(Pbar @ Gen_N_Data_scenarios[:,s] for s in range(N_S))) 
 
         mas_obj, P_N = solve_master(nu) 
 
@@ -120,6 +119,8 @@ def main():
     print("Correct Ending")
 
     print(Pbar)
+
+    return Pbar
 
 main()
 
