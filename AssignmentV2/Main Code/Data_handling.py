@@ -53,25 +53,46 @@ Trans_React = Trans_React.reshape((Trans_React.shape[0], 1))
 Trans_Cap = Trans_Cap.reshape((Trans_Cap.shape[0], 1))
 
 # Create random scenarios for the investment cost of new generators
-N_S = 3
+N_S = 80 # Number of scenarios for training
+N_S_test = 20 # Number of scenarios for testing
 max_deviation = 0.5 # 50% of maximum/ min deviation
 Gen_N_Data_scenarios = np.zeros((len(Gen_N_Data),N_S))
 Gen_N_OpCost_scenarios = np.zeros((len(Gen_N_OpCost),N_S))
+Gen_N_Data_scenarios_test = np.zeros((len(Gen_N_Data),N_S_test))
+Gen_N_OpCost_scenarios_test = np.zeros((len(Gen_N_OpCost),N_S_test))
 
-for i in range(N_S):
-    # Generate random variations in the range [-x%, x%]
-    random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_Data))
-    
-    # Apply the variations to the original costs
-    Gen_N_Data_scenarios[:,i] = Gen_N_Data.loc[:,'C_CapInv ($/MW)'] * (1 + random_variation)
+# Set the seed for reproducibility
+np.random.seed(69)
 
-for i in range(N_S):
-    # Generate random variations in the range [-x%, x%]
-    random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_OpCost))
-    
-    # Apply the variations to the original costs
-    Gen_N_OpCost_scenarios[:,i] = Gen_N_OpCost[:,0] * (1 + random_variation)
+def create_scenarios(N_S, Gen_N_Data_scenarios, Gen_N_OpCost_scenarios):
+    for i in range(N_S):
+        # Generate random variations in the range [-x%, x%]
+        random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_Data))
+        
+        # Apply the variations to the original costs
+        Gen_N_Data_scenarios[:,i] = Gen_N_Data.loc[:,'C_CapInv ($/MW)'] * (1 + random_variation)
 
+    for i in range(N_S):
+        # Generate random variations in the range [-x%, x%]
+        random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_OpCost))
+        
+        # Apply the variations to the original costs
+        Gen_N_OpCost_scenarios[:,i] = Gen_N_OpCost[:,0] * (1 + random_variation)
+    return Gen_N_Data_scenarios, Gen_N_OpCost_scenarios
+
+create_scenarios(N_S, Gen_N_Data_scenarios, Gen_N_OpCost_scenarios)
+create_scenarios(N_S_test, Gen_N_Data_scenarios_test, Gen_N_OpCost_scenarios_test)
+
+# Export the scenarios to CSV files
+Gen_N_Data_scenarios_df = pd.DataFrame(Gen_N_Data_scenarios)
+Gen_N_OpCost_scenarios_df = pd.DataFrame(Gen_N_OpCost_scenarios)
+Gen_N_Data_scenarios_test_df = pd.DataFrame(Gen_N_Data_scenarios_test)
+Gen_N_OpCost_scenarios_test_df = pd.DataFrame(Gen_N_OpCost_scenarios_test)
+
+Gen_N_Data_scenarios_df.to_csv('../Data/Scenarios/Train/Generators_New_Scenarios.csv', index=False)
+Gen_N_OpCost_scenarios_df.to_csv('../Data/Scenarios/Train/Generators_New_OpCost_Scenarios.csv', index=False)
+Gen_N_Data_scenarios_test_df.to_csv('../Data/Scenarios/Test/Generators_New_Scenarios.csv', index=False)
+Gen_N_OpCost_scenarios_test_df.to_csv('../Data/Scenarios/Test/Generators_New_OpCost_Scenarios.csv', index=False)
 
 ## DATA INDEX
 
