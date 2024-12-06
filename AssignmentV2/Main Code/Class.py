@@ -37,7 +37,7 @@ class InputData():
 ## CLASS FOR PARAMETERS
 
 class Parameters():
-    def __init__(self, H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B,R, N_S, N_S_test, max_deviation, epsilon, alpha, beta):
+    def __init__(self, H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B,R, N_S, N_S_test, max_deviation):
         self.H = H
         self.D = D
         self.Y = Y
@@ -51,9 +51,7 @@ class Parameters():
         self.R = R
         self.N_S = N_S
         self.Big_M = B*(1+max_deviation)
-        self.epsilon = epsilon
-        self.alpha = alpha
-        self.beta = beta
+        
 
         # Create useful vectors
         self.Sum_over_dem = np.ones((N_dem,1)) # Vector of ones to sum the demands over hours
@@ -270,13 +268,13 @@ class InvestmentModel_Robust():
 
         # Budget constraint
         for s in range(self.P.N_S):
-            self.con.budget = self.m.addConstr(gp.quicksum(self.var.P_N [g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N)) <= self.P.B, name='Budget constraint')
+            self.con.budget = self.m.addConstr(self.var.P_N @ self.D.Gen_N_Data_scenarios[:,s] <= self.P.B, name='Budget constraint')
 
 
     def _build_objective(self):
         revenues = ((self.var.p_N @ self.D.Gen_N_Z.T) * self.DA_Price).sum()  # don't use quicksum here because it's a <MLinExpr (3600, N_zone)>
         op_costs = gp.quicksum(self.var.p_N @ self.D.Gen_N_OpCost)
-        invest_costs = gp.quicksum((1/self.P.N_S)*self.var.P_N[g] * self.D.Gen_N_Data_scenarios[g,s] for g in range(self.P.N_gen_N) for s in range(self.P.N_S))
+        invest_costs = gp.quicksum((1/self.P.N_S) * self.var.P_N @ self.D.Gen_N_Data_scenarios[:,s] for s in range(self.P.N_S))
         objective = self.P.R*(revenues - op_costs) - invest_costs
         self.m.setObjective(objective, GRB.MAXIMIZE)
 
