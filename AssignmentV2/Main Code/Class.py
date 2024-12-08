@@ -8,7 +8,7 @@ import pandas as pd
 ## CLASS FOR THE INPUT DATA
 
 class InputData():
-    def __init__(self, Dem, Uti, Load_Z, Gen_E_OpCost, Gen_N_OpCost, Gen_N_MaxInvCap, Gen_E_Cap, Gen_N_InvCost, Gen_E_Tech, Gen_N_Tech, Gen_E_Z, Gen_N_Z, Gen_E_OpCap, Gen_N_OpCap, Trans_React, Trans_Cap, Trans_Line_From_Z, Trans_Line_To_Z, Trans_Z_Connected_To_Z,Gen_N_Data_scenarios,Gen_N_OpCost_scenarios):
+    def __init__(self, Dem, Uti, Load_Z, Gen_E_OpCost, Gen_N_OpCost, Gen_N_MaxInvCap, Gen_E_Cap, Gen_N_InvCost, Gen_E_Tech, Gen_N_Tech, Gen_E_Z, Gen_N_Z, Gen_E_OpCap, Gen_N_OpCap, Trans_React, Trans_Cap, Trans_Line_From_Z, Trans_Line_To_Z, Trans_Z_Connected_To_Z,Gen_N_Data_scenarios,Gen_N_OpCost_scenarios, Gen_N_Data_scenarios_train, Gen_N_OpCost_scenarios_train, Gen_N_Data_scenarios_test, Gen_N_OpCost_scenarios_test):
         self.Dem = Dem
         self.Uti = Uti
         self.Load_Z = Load_Z
@@ -30,6 +30,10 @@ class InputData():
         self.Trans_Z_Connected_To_Z = Trans_Z_Connected_To_Z
         self.Gen_N_Data_scenarios = Gen_N_Data_scenarios
         self.Gen_N_OpCost_scenarios = Gen_N_OpCost_scenarios
+        self.Gen_N_Data_scenarios_train = Gen_N_Data_scenarios_train
+        self.Gen_N_OpCost_scenarios_train = Gen_N_OpCost_scenarios_train
+        self.Gen_N_Data_scenarios_test = Gen_N_Data_scenarios_test
+        self.Gen_N_OpCost_scenarios_test = Gen_N_OpCost_scenarios_test
 
 
 
