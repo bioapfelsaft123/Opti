@@ -55,7 +55,7 @@ Trans_Cap = Trans_Cap.reshape((Trans_Cap.shape[0], 1))
 # Create random scenarios for the investment cost of new generators
 N_S = 5 # Number of scenarios for main models
 N_S_train = 80 # Number of scenarios for training
-N_S_test = 80 # Number of scenarios for testing
+N_S_test = 20 # Number of scenarios for testing
 max_deviation = 0.5 # 50% of maximum/ min deviation
 Gen_N_Data_scenarios = np.zeros((len(Gen_N_Data),N_S))
 Gen_N_OpCost_scenarios = np.zeros((len(Gen_N_OpCost),N_S))
