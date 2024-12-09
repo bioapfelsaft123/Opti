@@ -52,6 +52,7 @@ class Parameters():
         self.N_zone = N_zone
         self.N_line = N_line
         self.B = B
+        self.B_test_train = B*3 # Budget for the training and testing to see more investments
         self.R = R
         self.N_S = N_S
         self.Big_M = B*(1+max_deviation)
