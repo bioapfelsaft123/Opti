@@ -70,22 +70,58 @@ np.random.seed(69)
 def create_scenarios(N_S, Gen_N_Data_scenarios, Gen_N_OpCost_scenarios):
     for i in range(N_S):
         # Generate random variations in the range [-x%, x%]
-        random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_Data))
+        random_variation = np.random.uniform(-1.5*max_deviation, 0.5*max_deviation, size=len(Gen_N_Data))
         
         # Apply the variations to the original costs
         Gen_N_Data_scenarios[:,i] = Gen_N_Data.loc[:,'C_CapInv ($/MW)'] * (1 + random_variation)
 
     for i in range(N_S):
         # Generate random variations in the range [-x%, x%]
-        random_variation = np.random.uniform(-max_deviation, max_deviation, size=len(Gen_N_OpCost))
+        random_variation = np.random.uniform(-1.5*max_deviation, 0.5*max_deviation, size=len(Gen_N_OpCost))
         
         # Apply the variations to the original costs
         Gen_N_OpCost_scenarios[:,i] = Gen_N_OpCost[:,0] * (1 + random_variation)
     return Gen_N_Data_scenarios, Gen_N_OpCost_scenarios
 
+
+def create_scenarios2(N_S, Gen_N_Data_scenarios, Gen_N_OpCost_scenarios, max_deviation, mu=-0.2, sigma=0.5):
+    """
+    Create scenarios with normally distributed variations for investment costs and operating costs.
+    
+    Parameters:
+    - N_S: Number of scenarios
+    - Gen_N_Data_scenarios: Placeholder for investment cost scenarios
+    - Gen_N_OpCost_scenarios: Placeholder for operating cost scenarios
+    - max_deviation: Maximum deviation as a fraction of the original value
+    - mu: Mean of the normal distribution (default 0)
+    - sigma: Standard deviation of the normal distribution (default 0.5)
+    """
+    for i in range(N_S):
+        # Generate random variations with normal distribution
+        random_variation = np.random.normal(mu, sigma * max_deviation, size=len(Gen_N_Data))
+        # Clip the variations to ensure they stay within [-max_deviation, max_deviation]
+        random_variation = np.clip(random_variation, -max_deviation, max_deviation)
+        
+        # Apply the variations only to rows where "Technology" equals "Wind"
+        wind_filter = Gen_N_Data['Technology'] == 'Wind'
+        Gen_N_Data_scenarios[:, i] = Gen_N_Data.loc[:, 'C_CapInv ($/MW)']  # Default values
+        Gen_N_Data_scenarios[wind_filter, i] *= (1 + random_variation[wind_filter])
+
+
+    for i in range(N_S):
+        # Generate random variations with normal distribution
+        random_variation = np.random.normal(mu, sigma * max_deviation, size=len(Gen_N_OpCost))
+        # Clip the variations to ensure they stay within [-max_deviation, max_deviation]
+        random_variation = np.clip(random_variation, -max_deviation, max_deviation)
+        
+        # Apply the variations to the original costs
+        Gen_N_OpCost_scenarios[:,i] = Gen_N_OpCost[:,0] * (1 + random_variation)
+
+    return Gen_N_Data_scenarios, Gen_N_OpCost_scenarios
+
 create_scenarios(N_S, Gen_N_Data_scenarios, Gen_N_OpCost_scenarios)
-create_scenarios(N_S_train, Gen_N_Data_scenarios_train, Gen_N_OpCost_scenarios_train)
-create_scenarios(N_S_test, Gen_N_Data_scenarios_test, Gen_N_OpCost_scenarios_test)
+Gen_N_Data_scenarios_train,Gen_N_OpCost_scenarios_train= create_scenarios2(N_S_train, Gen_N_Data_scenarios_train, Gen_N_OpCost_scenarios_train, 0.8, 0, 0.5)
+Gen_N_Data_scenarios_test,Gen_N_OpCost_scenarios_test = create_scenarios2(N_S_test, Gen_N_Data_scenarios_test, Gen_N_OpCost_scenarios_test,0.8, 0, 0.5)
 
 # Export the scenarios to CSV files
 Gen_N_Data_scenarios_df = pd.DataFrame(Gen_N_Data_scenarios)
