@@ -37,8 +37,8 @@ R = 73 # Conversion rate
 
 ## CREATE THE PARAMETERS AND DATA OBJECTS
 ## CREATE THE PARAMETERS AND DATA OBJECTS
-ParametersObj = Parameters(H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B, R, N_S, N_S_test, max_deviation,epsilon, alpha, beta)
-DataObj = InputData(Dem, Uti, Load_Z, Gen_E_OpCost, Gen_N_OpCost, Gen_N_MaxInvCap, Gen_E_Cap, Gen_N_InvCost, Gen_E_Tech, Gen_N_Tech, Gen_E_Z, Gen_N_Z, Gen_E_OpCap, Gen_N_OpCap, Trans_React, Trans_Cap, Trans_Line_From_Z, Trans_Line_To_Z, Trans_Z_Connected_To_Z,Gen_N_Data_scenarios,Gen_N_OpCost_scenarios)
+ParametersObj = Parameters(H, D, Y, N, N_dem, N_gen_E, N_gen_N, N_zone, N_line, B, R, N_S, N_S_test, max_deviation)
+DataObj = InputData(Dem, Uti, Load_Z, Gen_E_OpCost, Gen_N_OpCost, Gen_N_MaxInvCap, Gen_E_Cap, Gen_N_InvCost, Gen_E_Tech, Gen_N_Tech, Gen_E_Z, Gen_N_Z, Gen_E_OpCap, Gen_N_OpCap, Trans_React, Trans_Cap, Trans_Line_From_Z, Trans_Line_To_Z, Trans_Z_Connected_To_Z,Gen_N_Data_scenarios,Gen_N_OpCost_scenarios, Gen_N_Data_scenarios_train, Gen_N_OpCost_scenarios_train, Gen_N_Data_scenarios_test, Gen_N_OpCost_scenarios_test)
 # Run the Market Clearing Problem
 MarketClearing1 = MarketClearingModel1(ParametersObj, DataObj)
 
@@ -64,10 +64,10 @@ for s in range(N_S):
     budget = m.addConstr(gp.quicksum(P_N[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N)) <= B, name='Budget constraint')
 
 
-revenues = gp.quicksum(p_N[h,g,s] * Gen_N_Z[z,g] * DA_Price[h,z] for h in range(N) for g in range(N_gen_N) for s in range(N_S) for z in range(N_zone))  
-op_costs = gp.quicksum(p_N[h,g,s] * Gen_N_OpCost_scenarios[g,s] for h in range(N) for g in range(N_gen_N) for s in range(N_S))
-invest_costs = gp.quicksum(P_N[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N) for s in range(N_S))
-objective = (1/N_S)*R*(revenues - op_costs)  - invest_costs*(1/N_S)
+revenues = (gp.quicksum((p_N[:,:,s] @ Gen_N_Z.T for s in range(N_S))) *  DA_Price).sum()
+op_costs = (gp.quicksum(p_N[:,:,s] @ Gen_N_OpCost_scenarios[:,s] for s in range(N_S))).sum()
+invest_costs = gp.quicksum(P_N @ Gen_N_Data_scenarios[:,s] for s in range(N_S))
+objective = (1/N_S) * (R*(revenues - op_costs) - invest_costs)
 m.setObjective(objective, GRB.MAXIMIZE)
 
 
