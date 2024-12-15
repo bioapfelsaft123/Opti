@@ -79,3 +79,57 @@ P_N = P_N.reshape((N_gen_N,1))
 df = pd.DataFrame(Gen_N_Tech, columns = ['Technology'])
 df['Invested capacity (MW)'] = P_N  
 print(df)
+
+# %%
+print('-------------------------------------------run benders problem')
+b = gp.Model('Benders problem')
+
+P_N_n = [  0.        ,
+       400.        ,
+         0.        ,
+       400.        ,
+         0.        ,
+       400.        ,
+       400.        ,
+         0.        ,
+       400.        ,
+         0.        ,
+         0.        ,
+         3.4718535 ,
+       400.        ,
+       327.65120053,
+       400.        ,
+         0.        ]
+
+p_N = b.addMVar((N, N_gen_N, N_S), lb=0) # Power output per hour for every new generator
+
+# Max production constraint
+for s in range(N_S):
+    max_p_N = b.addConstr(p_N[:,:,s] <= Gen_N_OpCap * P_N, name='Maximum RES production')
+
+rev = DA_Price @ Gen_N_Z
+
+revenues = gp.quicksum(p_N[:,g,s] @ rev[:,g] for g in range(N_gen_N) for s in range(N_S))
+op_costs = gp.quicksum(p_N[h,:,s] @ Gen_N_OpCost_scenarios[:,s] for h in range(N) for s in range(N_S))
+invest_costs = gp.quicksum(P_N_n @ Gen_N_Data_scenarios[:,s] for s in range(N_S))
+objective = (1/N_S) * (R*(revenues - op_costs) - invest_costs)
+b.setObjective(objective, GRB.MAXIMIZE)
+
+
+b.optimize()
+# %%
+print('----------------------------run Dual subproblem')
+
+d = gp.Model('Dual subproblem')
+
+nu = d.addMVar((N, N_gen_N, N_S), lb=0)
+
+for h in range(N):
+    for s in range(N_S):
+        max_p_N = d.addConstr(nu[h,:,s] >= (rev[h,:] - Gen_N_OpCost_scenarios[:,s])*R/N_S)
+objective = gp.quicksum(nu[:,g,s] @ (Gen_N_OpCap * P_N)[:,g] for g in range(N_gen_N) for s in range(N_S))
+
+d.setObjective(objective, GRB.MINIMIZE)
+
+d.optimize()
+# %%

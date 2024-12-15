@@ -46,6 +46,8 @@ DA_Price = MarketClearing1.res.DA_price
 
 
 # %%
+
+rev = DA_Price @ Gen_N_Z
 ## BENDERS
 
 mas = gp.Model('Benders')
@@ -60,12 +62,12 @@ cap_inv = mas.addConstr(P_N <= Gen_N_MaxInvCap, name='Maximum capacity investmen
 for s in range(N_S):
     budget = mas.addConstr(P_N @ Gen_N_Data_scenarios[:,s] <= B, name='Budget constraint')
 
-objective = - gp.quicksum(P_N[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N) for s in range(N_S))*(1/N_S) + q
+objective = - gp.quicksum(P_N @ Gen_N_Data_scenarios[:,s] for s in range(N_S))*(1/N_S) + q
 mas.setObjective(objective, GRB.MAXIMIZE)
 
 def solve_master(nu):
-
-    mas.addConstr(gp.quicksum(nu[h,:,s] @ P_N for h in range(N) for s in range(N_S)) >= q)
+    tmp = Gen_N_OpCap * P_N
+    mas.addConstr(gp.quicksum(nu[:,g,s] @ (tmp)[:,g] for g in range(N_gen_N) for s in range(N_S)) >= q)
 
     mas.optimize()
 
@@ -83,9 +85,9 @@ def solve_sub(P_N_c):
     # Max production constraint
     for h in range(N):
         for s in range(N_S):
-                sub.addConstr(nu[h,:,s] >= R*((DA_Price @ Gen_N_Z)[h,:] - Gen_N_OpCost_scenarios[:,s])/N_S)
-
-    objective = gp.quicksum(nu[h,:,s] @ P_N_c for h in range(N) for s in range(N_S))
+                sub.addConstr(nu[h,:,s] >= (rev[h,:] - Gen_N_OpCost_scenarios[:,s])*R/N_S)
+    Prod = Gen_N_OpCap * P_N_c
+    objective = gp.quicksum(nu[:,g,s] @ Prod[:,g] for g in range(N_gen_N) for s in range(N_S))
 
     sub.setObjective(objective, GRB.MINIMIZE)
 
@@ -99,26 +101,24 @@ import math
 def main():
     UB = math.inf
     LB = -math.inf
-    Delta = 1000
+    Delta = 10
     Pbar = np.zeros(N_gen_N)
     it = 1
 
-    while it <= 10: #(UB - LB > Delta):
+    while (UB - LB > Delta):
         sub_obj, nu = solve_sub(Pbar)  # Replace solve_sub with the corresponding function
 
-        LB = max(LB, sub_obj - sum(Pbar @ Gen_N_Data_scenarios[:,s] for s in range(N_S))) 
+        LB = max(LB, sub_obj - sum(Pbar @ Gen_N_Data_scenarios[:,s] for s in range(N_S))/N_S) 
 
         mas_obj, P_N = solve_master(nu) 
 
-        Pbar = P_N 
+        Pbar = P_N
         UB = mas_obj
 
         print(f"It: {it} UB: {UB} LB: {LB} Sub: {sub_obj}")
         it += 1
 
     print("Correct Ending")
-
-    print(Pbar)
 
     return Pbar
 
