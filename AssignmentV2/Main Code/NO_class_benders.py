@@ -1,3 +1,5 @@
+# Run Stochastic model and Benders decomposition to compare runnning times
+
 # Loading all the needed Packages
 import pandas as pd
 import numpy as np
@@ -9,7 +11,7 @@ from Data_handling import *
 from Class import *
 from Class_no_zone import *
 
-
+import time
 ## PARAMETERS DEFINITION
 
 # Time
@@ -44,11 +46,52 @@ MarketClearing1 = MarketClearingModel1(ParametersObj, DataObj)
 
 DA_Price = MarketClearing1.res.DA_price
 
+### Number of scenarios  -------------------------------------------------------------------------------------------------------------------
+print('Number of scenarios  -------------------------------------------------------------------------------------------------------------------')
+print(N_S)
 
-# %%
+### Stochastic problem  -------------------------------------------------------------------------------------------------------------------
+print('Stochastic problem  -------------------------------------------------------------------------------------------------------------------')
+start_time1 = time.time()
+
+
+m = gp.Model('Stochastic problem')
+
+
+P_N = m.addMVar((N_gen_N), lb=0) # Invested capacity in every new generator
+p_N = m.addMVar((N, N_gen_N, N_S), lb=0) # Power output per hour for every new generator
+
+
+# Capacity investment constraint
+cap_inv = m.addConstr(P_N <= Gen_N_MaxInvCap, name='Maximum capacity investment')
+
+# Max production constraint
+for s in range(N_S):
+    max_p_N = m.addConstr(p_N[:,:,s] <= Gen_N_OpCap * P_N, name='Maximum RES production') 
+
+# Budget constraint
+for s in range(N_S):
+    budget = m.addConstr(gp.quicksum(P_N[g] * Gen_N_Data_scenarios[g,s] for g in range(N_gen_N)) <= B, name='Budget constraint')
+
+
+revenues = (gp.quicksum((p_N[:,:,s] @ Gen_N_Z.T for s in range(N_S))) *  DA_Price).sum()
+op_costs = (gp.quicksum(p_N[:,:,s] @ Gen_N_OpCost_scenarios[:,s] for s in range(N_S))).sum()
+invest_costs = gp.quicksum(P_N @ Gen_N_Data_scenarios[:,s] for s in range(N_S))
+objective = (1/N_S) * (R*(revenues - op_costs) - invest_costs)
+m.setObjective(objective, GRB.MAXIMIZE)
+
+
+m.optimize()
+
+end_time1 = time.time()
+
+### BENDERS   -------------------------------------------------------------------------------------------------------------------
+print('BENDERS  -------------------------------------------------------------------------------------------------------------------')
+
+start_time2 = time.time()
 
 rev = DA_Price @ Gen_N_Z
-## BENDERS
+
 
 mas = gp.Model('Benders')
 
@@ -66,12 +109,12 @@ objective = - gp.quicksum(P_N @ Gen_N_Data_scenarios[:,s] for s in range(N_S))*(
 mas.setObjective(objective, GRB.MAXIMIZE)
 
 def solve_master(nu):
+
     tmp = Gen_N_OpCap * P_N
-    mas.addConstr(gp.quicksum(nu[:,g,s] @ (tmp)[:,g] for g in range(N_gen_N) for s in range(N_S)) >= q)
+
+    mas.addConstr(gp.quicksum(nu[:,g,s] @ tmp[:,g] for g in range(N_gen_N) for s in range(N_S)) >= q)
 
     mas.optimize()
-
-    print(q.x)
 
     return mas.objVal, P_N.X
         
@@ -124,4 +167,8 @@ def main():
 
 main()
 
-# %%
+end_time2 = time.time()
+
+print(f"Running time stochastic: {end_time1 - start_time1:.6f} seconds")
+print(f"Running time Benders decomposition: {end_time2 - start_time2:.6f} seconds")
+
